@@ -2,8 +2,9 @@
 
 import Link from "next/link";
 import { useState, useEffect } from "react";
-import { Menu, X, Flower2 as LotusIcon } from "lucide-react";
+import { Menu, X, Flower2 as LotusIcon, ShieldCheck } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useAuth } from "@/context/AuthContext";
 
 const navLinks = [
   { name: "මුල් පිටුව", href: "/" },
@@ -16,6 +17,7 @@ const navLinks = [
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const { user, isAdmin, loginWithGoogle, logout } = useAuth();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -43,7 +45,7 @@ export default function Navbar() {
           </Link>
 
           {/* Desktop Links */}
-          <div className="hidden md:flex items-center space-x-8">
+          <div className="hidden md:flex items-center space-x-6">
             {navLinks.map((link) => (
               <Link
                 key={link.name}
@@ -53,6 +55,34 @@ export default function Navbar() {
                 {link.name}
               </Link>
             ))}
+
+            {/* Admin link */}
+            {isAdmin && (
+              <Link
+                href="/admin"
+                className="flex items-center gap-1 bg-primary/10 text-primary px-3 py-1.5 rounded-full text-sm font-bold hover:bg-primary/20 transition-colors"
+              >
+                <ShieldCheck size={15} /> Admin
+              </Link>
+            )}
+
+            {/* Auth button */}
+            {user ? (
+              <button
+                onClick={logout}
+                className="flex items-center gap-2 text-sm text-secondary/60 hover:text-red-500 transition-colors font-medium"
+              >
+                <img src={user.photoURL || ""} alt="" className="w-7 h-7 rounded-full" />
+                Logout
+              </button>
+            ) : (
+              <button
+                onClick={loginWithGoogle}
+                className="text-sm bg-secondary text-white px-4 py-2 rounded-full font-bold hover:bg-secondary/80 transition-colors"
+              >
+                Login
+              </button>
+            )}
           </div>
 
           {/* Mobile Menu Button */}
@@ -87,6 +117,30 @@ export default function Navbar() {
                   {link.name}
                 </Link>
               ))}
+              {isAdmin && (
+                <Link
+                  href="/admin"
+                  onClick={() => setIsOpen(false)}
+                  className="flex items-center gap-2 px-3 py-4 text-lg font-bold text-primary border-b border-secondary/10"
+                >
+                  <ShieldCheck size={18} /> Admin Panel
+                </Link>
+              )}
+              {user ? (
+                <button
+                  onClick={() => { logout(); setIsOpen(false); }}
+                  className="block w-full text-left px-3 py-4 text-lg font-medium text-red-500"
+                >
+                  Logout
+                </button>
+              ) : (
+                <button
+                  onClick={() => { loginWithGoogle(); setIsOpen(false); }}
+                  className="block w-full text-left px-3 py-4 text-lg font-bold text-primary"
+                >
+                  Login with Google
+                </button>
+              )}
             </div>
           </motion.div>
         )}

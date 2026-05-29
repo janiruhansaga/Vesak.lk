@@ -9,10 +9,12 @@ import {
   User 
 } from "firebase/auth";
 import { app, auth } from "@/lib/firebase";
+import { isAdminEmail } from "@/lib/admins";
 
 interface AuthContextType {
   user: User | null;
   loading: boolean;
+  isAdmin: boolean;
   loginWithGoogle: () => Promise<void>;
   logout: () => Promise<void>;
 }
@@ -22,6 +24,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
     // Guard: only run if Firebase app is properly initialized
@@ -31,6 +34,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       setUser(user);
+      setIsAdmin(isAdminEmail(user?.email));
       setLoading(false);
     });
     return () => unsubscribe();
@@ -56,7 +60,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, loginWithGoogle, logout }}>
+    <AuthContext.Provider value={{ user, loading, isAdmin, loginWithGoogle, logout }}>
       {children}
     </AuthContext.Provider>
   );

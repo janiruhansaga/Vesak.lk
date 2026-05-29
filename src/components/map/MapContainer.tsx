@@ -27,7 +27,7 @@ interface Dansal {
 }
 
 export default function VesakMap() {
-  const { user } = useAuth();
+  const { user, isAdmin } = useAuth();
   const [dansals, setDansals] = useState<Dansal[]>([]);
 
   useEffect(() => {
@@ -90,12 +90,18 @@ export default function VesakMap() {
                     <button className="flex-1 text-[10px] bg-secondary text-white px-2 py-1.5 rounded font-bold">Directions</button>
                   </div>
                   
-                  {user && dansal.addedBy === user.uid && (
+                  {/* Delete: admin can delete any, user can delete own */}
+                  {user && (isAdmin || dansal.addedBy === user.uid) && (
                     <button 
                       onClick={() => handleDelete(dansal.id)}
-                      className="w-full text-[10px] bg-red-100 text-red-600 px-2 py-1.5 rounded font-bold flex items-center justify-center gap-1 hover:bg-red-200 transition-colors"
+                      className={`w-full text-[10px] px-2 py-1.5 rounded font-bold flex items-center justify-center gap-1 transition-colors ${
+                        isAdmin && dansal.addedBy !== user.uid
+                          ? "bg-orange-100 text-orange-600 hover:bg-orange-200"
+                          : "bg-red-100 text-red-600 hover:bg-red-200"
+                      }`}
                     >
-                      <Trash2 size={12} /> මකන්න (Delete)
+                      <Trash2 size={12} /> 
+                      {isAdmin && dansal.addedBy !== user.uid ? "🛡️ Admin Delete" : "මකන්න (Delete)"}
                     </button>
                   )}
                 </div>
