@@ -18,7 +18,7 @@ export const AudioProvider = ({ children }: { children: React.ReactNode }) => {
 
   useEffect(() => {
     // Initializing audio object only on client side
-    audioRef.current = new Audio("https://cdn.pixabay.com/audio/2022/05/27/audio_1808f30304.mp3");
+    audioRef.current = new Audio("/audio/vesak-music.mp3");
     audioRef.current.loop = true;
     audioRef.current.volume = volume;
 

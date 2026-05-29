@@ -8,7 +8,7 @@ import {
   signOut, 
   User 
 } from "firebase/auth";
-import { auth } from "@/lib/firebase";
+import { app, auth } from "@/lib/firebase";
 
 interface AuthContextType {
   user: User | null;
@@ -24,8 +24,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Guard: only run if Firebase is properly initialized
-    if (!auth || typeof (auth as any).onAuthStateChanged !== "function") {
+    // Guard: only run if Firebase app is properly initialized
+    if (!app) {
       setLoading(false);
       return;
     }
@@ -37,7 +37,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }, []);
 
   const loginWithGoogle = async () => {
-    if (!auth || typeof (auth as any).onAuthStateChanged !== "function") return;
+    if (!app) return;
     const provider = new GoogleAuthProvider();
     try {
       await signInWithPopup(auth, provider);
@@ -47,7 +47,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   const logout = async () => {
-    if (!auth || typeof (auth as any).onAuthStateChanged !== "function") return;
+    if (!app) return;
     try {
       await signOut(auth);
     } catch (error) {
