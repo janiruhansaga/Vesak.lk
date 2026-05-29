@@ -24,6 +24,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Guard: only run if Firebase is properly initialized
+    if (!auth || typeof (auth as any).onAuthStateChanged !== "function") {
+      setLoading(false);
+      return;
+    }
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       setUser(user);
       setLoading(false);
@@ -32,6 +37,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }, []);
 
   const loginWithGoogle = async () => {
+    if (!auth || typeof (auth as any).onAuthStateChanged !== "function") return;
     const provider = new GoogleAuthProvider();
     try {
       await signInWithPopup(auth, provider);
@@ -41,6 +47,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   const logout = async () => {
+    if (!auth || typeof (auth as any).onAuthStateChanged !== "function") return;
     try {
       await signOut(auth);
     } catch (error) {
