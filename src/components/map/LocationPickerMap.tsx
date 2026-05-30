@@ -11,12 +11,21 @@ const icon = L.icon({
   iconAnchor: [12, 41],
 });
 
+import { useEffect } from "react";
+
 function LocationMarker({ position, setPosition }: { position: { lat: number, lng: number }, setPosition: (pos: { lat: number, lng: number }) => void }) {
-  useMapEvents({
+  const map = useMapEvents({
     click(e) {
       setPosition({ lat: e.latlng.lat, lng: e.latlng.lng });
     },
   });
+
+  useEffect(() => {
+    map.flyTo([position.lat, position.lng], map.getZoom(), {
+      animate: true,
+      duration: 1
+    });
+  }, [position.lat, position.lng, map]);
 
   return (
     <Marker position={[position.lat, position.lng]} icon={icon} />

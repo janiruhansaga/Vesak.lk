@@ -65,10 +65,22 @@ export default function AddDansalForm({ onClose }: { onClose: () => void }) {
 
   const getCurrentLocation = () => {
     if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition((position) => {
-        setValue("lat", position.coords.latitude);
-        setValue("lng", position.coords.longitude);
-      });
+      setLoading(true);
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setValue("lat", position.coords.latitude);
+          setValue("lng", position.coords.longitude);
+          setLoading(false);
+        },
+        (error) => {
+          console.error("Error getting location:", error);
+          alert("පිහිටීම ලබාගැනීමට නොහැකි විය.");
+          setLoading(false);
+        },
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+      );
+    } else {
+      alert("ඔබේ බ්‍රව්සරය ස්ථානය ලබාගැනීම සඳහා සහය නොදක්වයි.");
     }
   };
 
