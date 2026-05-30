@@ -1,10 +1,8 @@
 import type { Metadata } from "next";
 import { Outfit } from "next/font/google";
 import "./globals.css";
-import { AudioProvider } from "@/context/AudioContext";
 import { AuthProvider } from "@/context/AuthContext";
 import Navbar from "@/components/shared/Navbar";
-import AudioController from "@/components/shared/AudioController";
 
 const outfit = Outfit({
   subsets: ["latin"],
@@ -29,17 +27,14 @@ export default function RootLayout({
     <html lang="si" className={`${outfit.variable} scroll-smooth`}>
       <body className="antialiased min-h-screen bg-vesak-white text-vesak-dark">
         <AuthProvider>
-          <AudioProvider>
             <Navbar />
             <main className="pt-16 min-h-screen">
               {children}
             </main>
-            <AudioController />
             <footer className="py-8 text-center text-sm text-secondary/60 bg-secondary/5 border-t border-secondary/10">
               <p>© 2026 Vesak Digital Experience. All Rights Reserved.</p>
               <p className="mt-2">May all beings be happy and peaceful.</p>
             </footer>
-          </AudioProvider>
         </AuthProvider>
       </body>
     </html>
