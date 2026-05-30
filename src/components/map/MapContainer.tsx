@@ -27,11 +27,10 @@ interface Dansal {
 }
 
 interface MapProps {
-  searchTerm?: string;
   selectedCategories?: string[];
 }
 
-export default function VesakMap({ searchTerm = "", selectedCategories = [] }: MapProps) {
+export default function VesakMap({ selectedCategories = [] }: MapProps) {
   const { user, isAdmin } = useAuth();
   const [dansals, setDansals] = useState<Dansal[]>([]);
 
@@ -79,10 +78,6 @@ export default function VesakMap({ searchTerm = "", selectedCategories = [] }: M
           url="https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}"
         />
         {dansals
-          .filter((dansal) => 
-            dansal.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            dansal.type.toLowerCase().includes(searchTerm.toLowerCase())
-          )
           .filter((dansal) => 
             selectedCategories.length === 0 || selectedCategories.includes(dansal.type)
           )

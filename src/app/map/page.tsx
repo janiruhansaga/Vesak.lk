@@ -17,7 +17,6 @@ const VesakMap = dynamic(() => import("@/components/map/MapContainer"), {
 export default function MapPage() {
   const { user, loginWithGoogle } = useAuth();
   const [showAddForm, setShowAddForm] = useState(false);
-  const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
 
   const handleCategoryToggle = (category: string) => {
@@ -67,17 +66,7 @@ export default function MapPage() {
         {/* Filters Sidebar */}
         <div className="lg:col-span-1 space-y-6">
           <div className="glass p-6 rounded-2xl border border-primary/10">
-            <div className="flex items-center gap-2 text-secondary font-bold mb-4">
-              <Search size={18} /> සොයන්න
-            </div>
-            <input 
-              type="text" 
-              placeholder="නම හෝ ස්ථානය..." 
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full bg-white/50 border border-secondary/10 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary mb-4"
-            />
-            
+
             <div className="flex items-center gap-2 text-secondary font-bold mb-4">
               <Filter size={18} /> වර්ගය
             </div>
@@ -106,7 +95,7 @@ export default function MapPage() {
 
         {/* Map View */}
         <div className="lg:col-span-3">
-          <VesakMap searchTerm={searchTerm} selectedCategories={selectedCategories} />
+          <VesakMap selectedCategories={selectedCategories} />
         </div>
       </div>
     </div>
