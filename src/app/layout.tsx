@@ -15,6 +15,9 @@ export const metadata: Metadata = {
   title: "වෙසක් අසිරිය - Vesak Digital Experience 2026",
   description: "ඩිජිටල් තාක්ෂණය ඔස්සේ වෙසක් අසිරිය විඳීමට සහ දන්සල් තොරතුරු ලබා ගැනීමට එක්වන්න.",
   keywords: ["Vesak", "Dansal Map", "Sri Lanka", "Buddhist Festival", "E-Cards", "Virtual Exhibition"],
+  icons: {
+    icon: "/logo.png",
+  },
 };
 
 export default function RootLayout({
