@@ -9,6 +9,12 @@ import { db } from "@/lib/firebase";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { useAuth } from "@/context/AuthContext";
 import { useState } from "react";
+import dynamic from "next/dynamic";
+
+const LocationPickerMap = dynamic(() => import("./LocationPickerMap"), {
+  ssr: false,
+  loading: () => <div className="h-48 w-full bg-secondary/5 animate-pulse rounded-2xl flex items-center justify-center text-secondary/40 text-sm">සිතියම පූරණය වෙමින්...</div>
+});
 
 const schema = z.object({
   name: z.string().min(3, "දන්සලේ නම අවම වශයෙන් අකුරු 3ක් විය යුතුය"),
@@ -24,13 +30,16 @@ export default function AddDansalForm({ onClose }: { onClose: () => void }) {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
 
-  const { register, handleSubmit, formState: { errors }, setValue } = useForm<FormData>({
+  const { register, handleSubmit, formState: { errors }, setValue, watch } = useForm<FormData>({
     resolver: zodResolver(schema),
     defaultValues: {
       lat: 6.9271, // Colombo default
       lng: 79.8612,
     }
   });
+
+  const lat = watch("lat");
+  const lng = watch("lng");
 
   const onSubmit = async (data: FormData) => {
     if (!user) return;
@@ -117,34 +126,28 @@ export default function AddDansalForm({ onClose }: { onClose: () => void }) {
                 {errors.type && <p className="text-red-500 text-xs mt-1">{errors.type.message}</p>}
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-secondary/60 mb-2">අක්ෂාංශ (Lat)</label>
-                  <input
-                    type="number"
-                    step="any"
-                    {...register("lat", { valueAsNumber: true })}
-                    className="w-full bg-white/50 border border-secondary/10 rounded-2xl px-6 py-4 focus:outline-none focus:ring-2 focus:ring-primary"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-secondary/60 mb-2">දේශාංශ (Lng)</label>
-                  <input
-                    type="number"
-                    step="any"
-                    {...register("lng", { valueAsNumber: true })}
-                    className="w-full bg-white/50 border border-secondary/10 rounded-2xl px-6 py-4 focus:outline-none focus:ring-2 focus:ring-primary"
-                  />
+              <div>
+                <label className="block text-sm font-medium text-secondary/60 mb-2">ස්ථානය තෝරන්න (සිතියම මත ක්ලික් කරන්න)</label>
+                <LocationPickerMap 
+                  position={{ lat, lng }} 
+                  setPosition={(pos) => {
+                    setValue("lat", pos.lat);
+                    setValue("lng", pos.lng);
+                  }} 
+                />
+                <div className="flex justify-between items-center mt-2 px-1">
+                  <div className="text-xs text-secondary/50 font-mono">
+                    Lat: {lat.toFixed(5)}, Lng: {lng.toFixed(5)}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={getCurrentLocation}
+                    className="flex items-center gap-1 text-primary font-bold text-xs hover:underline"
+                  >
+                    <MapPin size={14} /> මගේ පිහිටීම (My Location)
+                  </button>
                 </div>
               </div>
-
-              <button
-                type="button"
-                onClick={getCurrentLocation}
-                className="flex items-center justify-center gap-2 text-primary font-bold text-sm hover:underline"
-              >
-                <MapPin size={16} /> මගේ දැන් පිහිටීම ලබාගන්න
-              </button>
 
               <button
                 disabled={loading}
