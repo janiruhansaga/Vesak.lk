@@ -82,14 +82,28 @@ export default function AdminPage() {
 
     setUploadingTemplate(true);
     try {
-      const storageRef = ref(storage, `ecard_templates/${Date.now()}_${file.name}`);
-      await uploadBytes(storageRef, file);
-      const url = await getDownloadURL(storageRef);
-
-      await addDoc(collection(db, "ecard_templates"), {
-        url,
-        createdAt: Date.now()
+      // Upload to ImgBB
+      const formData = new FormData();
+      formData.append("image", file);
+      
+      const imgbbRes = await fetch("https://api.imgbb.com/1/upload?key=a28cb657ce1e6d8f8b185f9d2f0823b8", {
+        method: "POST",
+        body: formData,
       });
+      
+      const imgbbData = await imgbbRes.json();
+      
+      if (imgbbData.success) {
+        const url = imgbbData.data.url;
+        
+        // Save URL to Firestore
+        await addDoc(collection(db, "ecard_templates"), {
+          url,
+          createdAt: Date.now()
+        });
+      } else {
+        throw new Error("ImgBB upload failed");
+      }
     } catch (error) {
       console.error("Upload error:", error);
       alert("Error uploading template");
