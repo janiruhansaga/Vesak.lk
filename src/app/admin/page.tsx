@@ -3,9 +3,10 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { db } from "@/lib/firebase";
-import { collection, onSnapshot, deleteDoc, doc, updateDoc, query, orderBy } from "firebase/firestore";
+import { collection, onSnapshot, deleteDoc, doc, updateDoc, query, orderBy, addDoc } from "firebase/firestore";
+import { ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
 import { motion, AnimatePresence } from "framer-motion";
-import { Trash2, ShieldCheck, MapPin, Clock, CheckCircle, XCircle, AlertTriangle } from "lucide-react";
+import { Trash2, ShieldCheck, MapPin, Clock, CheckCircle, XCircle, AlertTriangle, Image as ImageIcon, Upload } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 interface Dansal {
@@ -26,6 +27,10 @@ export default function AdminPage() {
   const [dansals, setDansals] = useState<Dansal[]>([]);
   const [filter, setFilter] = useState<"All" | "Active" | "Pending" | "Removed">("All");
   const [deleting, setDeleting] = useState<string | null>(null);
+  
+  const [activeTab, setActiveTab] = useState<"Dansals" | "Templates">("Dansals");
+  const [templates, setTemplates] = useState<{ id: string, url: string }[]>([]);
+  const [uploadingTemplate, setUploadingTemplate] = useState(false);
 
   useEffect(() => {
     if (!loading && (!user || !isAdmin)) {
@@ -36,10 +41,19 @@ export default function AdminPage() {
   useEffect(() => {
     if (!isAdmin) return;
     const q = query(collection(db, "dansal"), orderBy("createdAt", "desc"));
-    const unsub = onSnapshot(q, (snap) => {
+    const unsubDansals = onSnapshot(q, (snap) => {
       setDansals(snap.docs.map((d) => ({ id: d.id, ...d.data() })) as Dansal[]);
     });
-    return () => unsub();
+
+    const qTemplates = query(collection(db, "ecard_templates"), orderBy("createdAt", "desc"));
+    const unsubTemplates = onSnapshot(qTemplates, (snap) => {
+      setTemplates(snap.docs.map((d) => ({ id: d.id, url: d.data().url })));
+    });
+
+    return () => {
+      unsubDansals();
+      unsubTemplates();
+    };
   }, [isAdmin]);
 
   const handleDelete = async (id: string) => {
@@ -59,6 +73,39 @@ export default function AdminPage() {
       await updateDoc(doc(db, "dansal", id), { status });
     } catch (e) {
       alert("Error updating status");
+    }
+  };
+
+  const handleTemplateUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploadingTemplate(true);
+    try {
+      const storageRef = ref(storage, `ecard_templates/${Date.now()}_${file.name}`);
+      await uploadBytes(storageRef, file);
+      const url = await getDownloadURL(storageRef);
+
+      await addDoc(collection(db, "ecard_templates"), {
+        url,
+        createdAt: Date.now()
+      });
+    } catch (error) {
+      console.error("Upload error:", error);
+      alert("Error uploading template");
+    } finally {
+      setUploadingTemplate(false);
+    }
+  };
+
+  const handleDeleteTemplate = async (id: string, url: string) => {
+    if (!confirm("මෙම Template එක මකා දමන්නද?")) return;
+    try {
+      await deleteDoc(doc(db, "ecard_templates", id));
+      // Optionally delete from storage using URL, but leaving it is safer if used by existing downloaded cards
+    } catch (error) {
+      console.error("Delete error:", error);
+      alert("Error deleting template");
     }
   };
 
@@ -91,13 +138,41 @@ export default function AdminPage() {
         </div>
         <div>
           <h1 className="text-3xl font-bold text-secondary font-outfit">Admin Dashboard</h1>
-          <p className="text-secondary/50 text-sm">දන්සල් කළමනාකරණය · {user?.email}</p>
+          <p className="text-secondary/50 text-sm">කළමනාකරණය · {user?.email}</p>
         </div>
       </motion.div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-        {(["All", "Active", "Pending", "Removed"] as const).map((s) => (
+      {/* Tabs */}
+      <div className="flex gap-4 mb-8">
+        <button
+          onClick={() => setActiveTab("Dansals")}
+          className={`px-6 py-3 rounded-xl font-bold flex items-center gap-2 transition-all ${
+            activeTab === "Dansals" ? "bg-primary text-secondary shadow-lg" : "bg-primary/10 text-secondary/60 hover:bg-primary/20"
+          }`}
+        >
+          <MapPin size={20} /> දන්සල් කළමනාකරණය
+        </button>
+        <button
+          onClick={() => setActiveTab("Templates")}
+          className={`px-6 py-3 rounded-xl font-bold flex items-center gap-2 transition-all ${
+            activeTab === "Templates" ? "bg-primary text-secondary shadow-lg" : "bg-primary/10 text-secondary/60 hover:bg-primary/20"
+          }`}
+        >
+          <ImageIcon size={20} /> E-Card Templates
+        </button>
+      </div>
+
+      <AnimatePresence mode="wait">
+        {activeTab === "Dansals" ? (
+          <motion.div
+            key="dansals"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+          >
+            {/* Stats */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+              {(["All", "Active", "Pending", "Removed"] as const).map((s) => (
           <motion.button
             key={s}
             whileHover={{ scale: 1.02 }}
@@ -209,6 +284,60 @@ export default function AdminPage() {
           </table>
         </div>
       </div>
+          </motion.div>
+        ) : (
+          <motion.div
+            key="templates"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            className="space-y-6"
+          >
+            <div className="glass p-6 rounded-3xl border border-primary/20 flex flex-col items-center justify-center gap-4">
+              <h2 className="text-xl font-bold text-secondary">Upload New Template</h2>
+              <label className="cursor-pointer bg-primary/10 hover:bg-primary/20 border-2 border-dashed border-primary/30 rounded-2xl p-8 flex flex-col items-center gap-3 transition-all w-full max-w-md">
+                {uploadingTemplate ? (
+                  <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" />
+                ) : (
+                  <>
+                    <Upload size={32} className="text-primary" />
+                    <span className="font-bold text-secondary">Click to Select Image</span>
+                    <span className="text-xs text-secondary/50">Recommended ratio: 4:5</span>
+                  </>
+                )}
+                <input 
+                  type="file" 
+                  className="hidden" 
+                  accept="image/*" 
+                  onChange={handleTemplateUpload} 
+                  disabled={uploadingTemplate}
+                />
+              </label>
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
+              {templates.map((t) => (
+                <div key={t.id} className="relative group aspect-[4/5] rounded-2xl overflow-hidden shadow-lg border border-secondary/10">
+                  <img src={t.url} alt="Template" className="w-full h-full object-cover" />
+                  <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                    <button
+                      onClick={() => handleDeleteTemplate(t.id, t.url)}
+                      className="bg-red-500 hover:bg-red-600 text-white p-3 rounded-full shadow-xl transform hover:scale-110 transition-all"
+                    >
+                      <Trash2 size={20} />
+                    </button>
+                  </div>
+                </div>
+              ))}
+              {templates.length === 0 && (
+                <div className="col-span-full py-12 text-center text-secondary/40 font-bold">
+                  No templates uploaded yet.
+                </div>
+              )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

@@ -2,11 +2,17 @@
 
 import { useState, useRef } from "react";
 import html2canvas from "html2canvas";
-import { Download, Share2, Image as ImageIcon, Type, Move, Trash2, Maximize, Layout } from "lucide-react";
+import { Share2, Image as ImageIcon, Type, Move, Trash2, Maximize, Layout } from "lucide-react";
 import { motion } from "framer-motion";
+import { db } from "@/lib/firebase";
+import { collection, onSnapshot, query, orderBy } from "firebase/firestore";
+import { useEffect } from "react";
 
 // Using explicit HEX colors to avoid html2canvas oklab/oklch issues with Tailwind 4
-const templates = [
+// Using explicit HEX colors to avoid html2canvas oklab/oklch issues with Tailwind 4
+type Template = { id: string | number; bg?: string; border?: string; textColor: string; imageUrl?: string };
+
+const defaultTemplates: Template[] = [
   { id: 1, bg: "linear-gradient(to bottom right, #FFD700, #FF8C00, #5D001E)", textColor: "#FFFFFF" },
   { id: 2, bg: "#FFFEF7", border: "8px solid #FFD700", textColor: "#5D001E" },
   { id: 3, bg: "#5D001E", border: "4px double #FFD700", textColor: "#FFD700" },
@@ -16,12 +22,21 @@ export default function ECardGenerator() {
   const [name, setName] = useState("Your Name");
   const [heading, setHeading] = useState("Happy Vesak!");
   const [message, setMessage] = useState("May the teachings of Buddha fill your life with peace and joy.");
-  const [selectedTemplate, setSelectedTemplate] = useState(templates[0]);
+  const [selectedTemplate, setSelectedTemplate] = useState<Template>(defaultTemplates[0]);
   const [userImage, setUserImage] = useState<string | null>(null);
   const [imageSize, setImageSize] = useState(200); 
   const [isBackground, setIsBackground] = useState(false);
+  const [serverTemplates, setServerTemplates] = useState<{id: string, url: string}[]>([]);
   
   const cardRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const q = query(collection(db, "ecard_templates"), orderBy("createdAt", "desc"));
+    const unsub = onSnapshot(q, (snap) => {
+      setServerTemplates(snap.docs.map(doc => ({ id: doc.id, url: doc.data().url })));
+    });
+    return () => unsub();
+  }, []);
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -156,14 +171,23 @@ export default function ECardGenerator() {
 
         <div className="glass p-6 rounded-3xl border border-primary/20 space-y-4">
           <h2 className="text-sm font-bold opacity-40 uppercase">වර්ණ තෝරන්න (Templates)</h2>
-          <div className="flex gap-3">
-            {templates.map((t) => (
+          <div className="flex flex-wrap gap-3">
+            {defaultTemplates.map((t) => (
               <button
                 key={t.id}
                 onClick={() => setSelectedTemplate(t)}
                 className={`w-12 h-12 rounded-lg ${selectedTemplate.id === t.id ? "ring-4 ring-primary ring-offset-2" : "opacity-60 hover:opacity-100"} transition-all`}
                 style={{ background: t.bg, border: t.border || 'none' }}
               />
+            ))}
+            {serverTemplates.map((t) => (
+              <button
+                key={t.id}
+                onClick={() => setSelectedTemplate({ id: t.id, textColor: "#FFFFFF", imageUrl: t.url })}
+                className={`w-12 h-12 rounded-lg overflow-hidden bg-secondary/10 ${selectedTemplate.id === t.id ? "ring-4 ring-primary ring-offset-2" : "opacity-60 hover:opacity-100"} transition-all`}
+              >
+                <img src={t.url} alt="Template" className="w-full h-full object-cover" />
+              </button>
             ))}
           </div>
         </div>
@@ -186,7 +210,7 @@ export default function ECardGenerator() {
           <div
             ref={cardRef}
             style={{ 
-              background: selectedTemplate.bg, 
+              background: selectedTemplate.imageUrl ? '#000000' : (selectedTemplate.bg || 'transparent'), 
               border: selectedTemplate.border || 'none',
               aspectRatio: '4/5',
               width: '100%',
@@ -200,10 +224,18 @@ export default function ECardGenerator() {
               overflow: 'hidden'
             }}
           >
+            {/* Server Template Image Background */}
+            {selectedTemplate.imageUrl && (
+              <div style={{ position: 'absolute', inset: 0, zIndex: 0 }}>
+                <img src={selectedTemplate.imageUrl} alt="Background" crossOrigin="anonymous" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                <div style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(0,0,0,0.4)' }} />
+              </div>
+            )}
+
             {/* Background Image Logic */}
             {userImage && isBackground && (
               <div style={{ position: 'absolute', inset: 0, zIndex: 0 }}>
-                <img src={userImage} alt="Background" style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: 0.6 }} />
+                <img src={userImage} alt="Background" crossOrigin="anonymous" style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: 0.6 }} />
                 <div style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(0,0,0,0.2)' }} />
               </div>
             )}
@@ -239,7 +271,7 @@ export default function ECardGenerator() {
                     transform: 'rotate(2deg)'
                   }}
                 >
-                  <img src={userImage} alt="User" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  <img src={userImage} alt="User" crossOrigin="anonymous" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                 </div>
               </motion.div>
             )}
