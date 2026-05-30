@@ -2,7 +2,7 @@
 
 import { useState, useRef } from "react";
 import html2canvas from "html2canvas";
-import { Share2, Image as ImageIcon, Type, Move, Trash2, Maximize, Layout } from "lucide-react";
+import { Download, Share2, Image as ImageIcon, Type, Move, Trash2, Maximize, Layout } from "lucide-react";
 import { motion } from "framer-motion";
 import { db } from "@/lib/firebase";
 import { collection, onSnapshot, query, orderBy } from "firebase/firestore";
