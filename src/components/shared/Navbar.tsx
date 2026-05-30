@@ -36,8 +36,8 @@ export default function Navbar() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center">
           <Link href="/" className="flex items-center space-x-2 group">
-            <div className="bg-primary p-2 rounded-full shadow-glow animate-lamp-flicker">
-              <LotusIcon className="w-6 h-6 text-secondary" />
+            <div className="bg-primary/20 p-1.5 rounded-full shadow-glow animate-lamp-flicker">
+              <img src="/logo.png" alt="Vesak Logo" className="w-8 h-8 object-contain drop-shadow-md" />
             </div>
             <span className="text-2xl font-bold text-secondary font-outfit tracking-wider">
               වෙසක් <span className="text-primary text-glow">අසිරිය</span>
