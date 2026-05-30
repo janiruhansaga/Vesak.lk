@@ -17,6 +17,16 @@ const VesakMap = dynamic(() => import("@/components/map/MapContainer"), {
 export default function MapPage() {
   const { user, loginWithGoogle } = useAuth();
   const [showAddForm, setShowAddForm] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+
+  const handleCategoryToggle = (category: string) => {
+    setSelectedCategories((prev) => 
+      prev.includes(category) 
+        ? prev.filter((c) => c !== category)
+        : [...prev, category]
+    );
+  };
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-12">
@@ -63,6 +73,8 @@ export default function MapPage() {
             <input 
               type="text" 
               placeholder="නම හෝ ස්ථානය..." 
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full bg-white/50 border border-secondary/10 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary mb-4"
             />
             
@@ -72,7 +84,12 @@ export default function MapPage() {
             <div className="space-y-2">
               {["බත්", "පාන්", "අයිස්ක්‍රීම්", "වෙනත්"].map((cat) => (
                 <label key={cat} className="flex items-center gap-2 cursor-pointer group">
-                  <input type="checkbox" className="w-5 h-5 accent-primary" />
+                  <input 
+                    type="checkbox" 
+                    checked={selectedCategories.includes(cat)}
+                    onChange={() => handleCategoryToggle(cat)}
+                    className="w-5 h-5 accent-primary" 
+                  />
                   <span className="text-secondary/80 group-hover:text-secondary">{cat}</span>
                 </label>
               ))}
@@ -89,7 +106,7 @@ export default function MapPage() {
 
         {/* Map View */}
         <div className="lg:col-span-3">
-          <VesakMap />
+          <VesakMap searchTerm={searchTerm} selectedCategories={selectedCategories} />
         </div>
       </div>
     </div>

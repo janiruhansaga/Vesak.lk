@@ -26,7 +26,12 @@ interface Dansal {
   addedBy?: string;
 }
 
-export default function VesakMap() {
+interface MapProps {
+  searchTerm?: string;
+  selectedCategories?: string[];
+}
+
+export default function VesakMap({ searchTerm = "", selectedCategories = [] }: MapProps) {
   const { user, isAdmin } = useAuth();
   const [dansals, setDansals] = useState<Dansal[]>([]);
 
@@ -73,7 +78,15 @@ export default function VesakMap() {
           attribution='&copy; Google Maps'
           url="https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}"
         />
-        {dansals.map((dansal) => (
+        {dansals
+          .filter((dansal) => 
+            dansal.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            dansal.type.toLowerCase().includes(searchTerm.toLowerCase())
+          )
+          .filter((dansal) => 
+            selectedCategories.length === 0 || selectedCategories.includes(dansal.type)
+          )
+          .map((dansal) => (
           <Marker 
             key={dansal.id} 
             position={[dansal.lat, dansal.lng]} 
